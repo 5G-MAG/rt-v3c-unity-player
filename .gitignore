@@ -1,0 +1,48 @@
+# =============== #
+# Unity generated #
+# =============== #
+[Tt]emp/
+[Oo]bj/
+[Bb]uild
+/[Rr]elease
+/[Dd]ebug/
+[Ll]ogs
+[Bb]uilds/
+[Ll]ibrary/
+UserSettings/
+sysinfo.txt
+*.stackdump
+*.apk
+*.unitypackage
+.vsconfig
+
+# ===================================== #
+# Visual Studio / MonoDevelop generated #
+# ===================================== #
+[Ee]xported[Oo]bj/
+.vs/
+*.userprefs
+*.csproj
+*.pidb
+*.pidb.meta
+*.suo
+*.sln*
+*.user
+*.unityproj
+*.tmp
+*.svd
+*.vscode
+*.directory
+
+# ===================================== #
+# V3CDecoder Runtime                    #
+# ===================================== #
+Packages/V3CDecoder/Runtime/Plugins/Android/libs/arm64-v8a/*.so
+Packages/V3CDecoder/Runtime/Plugins/Android/libs/arm64-v8a/*.so.meta
+Packages/V3CDecoder/Runtime/Plugins/*.dll
+Packages/V3CDecoder/Runtime/Plugins/*.dll.meta
+Packages/V3CDecoder/Runtime/Plugins/Android/V3CImmersiveDecoderVideo.jar
+Packages/V3CDecoder/Runtime/Plugins/Android/V3CImmersiveDecoderVideo.jar.meta
+V3CImmersiveTest/Assets/Sprites/LICENSE.meta
+V3CImmersiveTest/ProjectSettings/TimelineSettings.asset
+V3CImmersiveTest/.utmp/

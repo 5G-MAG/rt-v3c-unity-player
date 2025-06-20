@@ -1,0 +1,192 @@
+/*
+* Copyright (c) 2024 InterDigital R&D France
+* Licensed under the License terms of 5GMAG software (the "License").
+* You may not use this file except in compliance with the License.
+* You may obtain a copy of the License at https://www.5g-mag.com/license .
+* Unless required by applicable law or agreed to in writing, software distributed under the License is
+* distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and limitations under the License.
+*/
+
+#pragma kernel ComputeDispatch
+#pragma kernel ComputeModelRange
+#pragma kernel ComputeHistModelRange
+//#pragma kernel ComputeKeysFullRange
+#pragma kernel ComputeKeyCount
+#pragma kernel ComputeUV
+
+
+Texture2D<float4> Input; //Point positions 
+RWTexture2D<uint> KeyTex; //Key of each point => Should we really cache it?
+RWTexture2D<float4> Output; //Sorted UVs
+
+uint Width, Height; //Size of the input and output textures
+float InvWidth, InvHeight; //Caching the inverse of width and height
+
+float4x4 MV; //Model/View matrix to project the points in the right position
+float zmin; //Near clipping plane in world units
+float zmax; //Far cliping plane in world units
+
+uint Range; //Number of depth slice to sort into
+
+uint NumVerts;
+
+RWStructuredBuffer<uint> IndirectArgs;
+RWStructuredBuffer<uint> ModelInfo;
+RWStructuredBuffer<uint> Dispatch;
+
+RWStructuredBuffer<uint> Histogram;
+RWStructuredBuffer<uint> KeyCount;
+
+//Reinterpret a float as a uint in a way that keeps negative values < positive values 
+inline uint readFloatAsUint(float fvalue)
+{
+    uint uvalue = asuint(fvalue);
+
+    if ((uvalue >> 31) == 0)
+    {
+        // The sign bit wasn't set, so set it temporarily.
+        uvalue = uvalue | (1 << 31);
+    }
+    else
+    {
+        // In the case where we started with a negative value, take
+        // the ones complement.
+        uvalue = ~uvalue;
+    }
+    return uvalue;
+}
+
+//Inverse of readFloatAsUint to get the value back
+inline float readUintAsFloat(uint uvalue)
+{
+    float fvalue;
+    if ((uvalue >> 31) == 0)
+    {
+        // The MSB is unset, so take the complement, then bitcast,
+        // turning this back into a negative floating point value.
+
+        fvalue = asfloat(~uvalue);
+    }
+    else
+    {
+        // The MSB is set, so we started with a positive float.
+        // Unset the MSB and bitcast.
+        fvalue = asfloat(uvalue & ~(1u << 31));
+    }
+    return fvalue;
+}
+
+[numthreads(1,1,1)]
+void ComputeDispatch()
+{
+    ModelInfo[0] = IndirectArgs[0] / NumVerts;
+    
+    uint t_x = Width>>3;
+    uint t_y = (ModelInfo[0] / Width) / 8 + 1;
+
+    Dispatch[0] = t_x;
+    Dispatch[1] = t_y;
+    Dispatch[2] = 1;
+    
+}
+
+[numthreads(8,8,1)]
+void ComputeModelRange(uint3 id : SV_DispatchThreadID)
+{
+    //Check the position of the point on screen
+    float4 p_pos = mul(MV, float4(Input[id.xy].xyz, 1.0));
+    
+    //compute the normalized linear depth
+    float depth = 1 - ((-p_pos.z - zmin) / (zmax - zmin));
+    
+    uint udepth = readFloatAsUint(depth);
+    InterlockedMin(ModelInfo[1], udepth);
+    InterlockedMax(ModelInfo[2], udepth);
+}
+
+[numthreads(8, 8, 1)]
+void ComputeHistModelRange(uint3 id : SV_DispatchThreadID)
+{
+    //Check linear id to reject excedentary points 
+    if ((id.y * Width + id.x) < ModelInfo[0])
+    {
+    
+        //Compute depth
+        float4 p_pos = mul(MV, Input[id.xy]);
+        float depth = 1 - ((-p_pos.z - zmin) / (zmax - zmin));
+    
+        float min_d = readUintAsFloat(ModelInfo[1]);
+        float max_d = readUintAsFloat(ModelInfo[2]);
+
+        float depth_range = (depth - min_d) / (max_d - min_d);
+    
+        //Get the corresponding slice/key. 
+        uint key = (uint) (depth_range * (Range - 1));
+    
+        KeyTex[id.xy] = key;
+    
+        //Register the point in the histogram
+        InterlockedAdd(Histogram[key], 1);
+    }
+    
+}
+
+//[numthreads(8, 8, 1)]
+//void ComputeKeysFullRange(uint3 id : SV_DispatchThreadID)
+//{
+//     //Check the position of the point on screen
+//    float4 p_pos = mul(MV, Input[id.xy]);
+    
+//    //compute the reversed normalized linear depth (0->far plane, 1->near plane)
+//    float depth = 1 - ((-p_pos.z - zmin) / (zmax - zmin));
+    
+//    //Saturate
+//    depth = max(min(depth, 1), 0);
+    
+//    //Get the corresponding slice/key. 
+//    uint key = (uint) (depth * (Range-1));
+       
+//    KeyTex[id.xy] = key;
+    
+//    //Register the point in the histogram
+//    InterlockedAdd(Histogram[key], 1);
+//}
+
+
+//Compute the accumulated key count. Single thread, but faster to compute here than to do a readback
+[numthreads(1, 1, 1)]
+void ComputeKeyCount()
+{
+    KeyCount[0] = Histogram[0];
+    for (uint i = 1; i < Range; i++)
+    {
+        KeyCount[i] = KeyCount[i - 1] + Histogram[i];
+    }
+}
+
+
+[numthreads(8,8,1)]
+void ComputeUV(uint3 id : SV_DispatchThreadID)
+{
+    //Check linear id to reject excedentary points 
+    if ((id.y * Width + id.x) < ModelInfo[0])
+    {
+        //Get the corresponding slice/key
+        uint key = KeyTex[id.xy];
+    
+        //Fetch the id and using overflow for a uint decrement
+        uint i_plus_one;
+        InterlockedAdd(KeyCount[key], 0xFFFFFFFFU, i_plus_one);
+        uint i = i_plus_one + 0xFFFFFFFFU;
+    
+        //Compute where to write the data (i.e. the ordered point)
+        uint2 i_uv = uint2(i % Width, i / Width);
+
+        //Compte what data to write (i.e. the uv to sample the pos and col textures)
+        float4 uv = float4((float(id.x) + 0.5f) * InvWidth, (float(id.y) + 0.5f) * InvHeight, 0, 1);
+        
+        Output[i_uv.xy] = uv; 
+    }
+}

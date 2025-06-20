@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 653243be7bbe5ae4e8c188f03c0da580, type: 3}
+  m_Name: MIVBetterTouchCamController
+  m_EditorClassIdentifier: 
+  enable: 1
+  name: MIVTouchController
+  translationSensitivity: 0.02
+  rotationSensitivity: 0.02
+  zoomSensitivity: 0.1
+  relativeFOVLow: 0.8
+  relativeFOVHigh: 1.2
+  movementThreshold: 50
+  longPressTimeThreshold: 0.5
+  zoomThresh: 10
