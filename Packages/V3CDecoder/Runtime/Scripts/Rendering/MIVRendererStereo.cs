@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2024 InterDigital R&D France
+* Copyright (c) 2025 InterDigital CE Patent Holdings SASU
 * Licensed under the License terms of 5GMAG software (the "License").
 * You may not use this file except in compliance with the License.
 * You may obtain a copy of the License at https://www.5g-mag.com/license .
@@ -347,7 +347,7 @@ namespace IDCC.V3CDecoder
                     }
 
                     float ppm = m_texWidth / m_refWidth;
-                    float focal = m_texHeight / (2f * Mathf.Atan(DecoderPluginInterface.GetReferenceCameraVerticalFoV() / 2f));
+                    float focal = m_viewDist.z* ppm;
 
                     //This work without updating the width and height because we are computing the distance in an unscaled referential
                     //(so when compensating for a bigger scale the distance ends up smaller, and vice versa, which is what we need)
@@ -355,7 +355,7 @@ namespace IDCC.V3CDecoder
                     float cy = (0.5F * m_refHeight + m_viewDist.y) * ppm;
 
                     DecoderPluginInterface.UpdateCameraIntrinsics((uint)i, focal, focal, cx, cy);
-                    DecoderPluginInterface.UpdateCameraExtrinsics((uint)i, -m_viewDist.x, -m_viewDist.y, -m_camPoses[i].position.z, 0, 0, 0, 1);
+                    DecoderPluginInterface.UpdateCameraExtrinsics((uint)i, -m_viewDist.x, -m_viewDist.y, m_winDistance - m_viewDist.z, 0, 0, 0, 1);
                 }
             }
         }

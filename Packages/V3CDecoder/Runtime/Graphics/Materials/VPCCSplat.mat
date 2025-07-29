@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: SortedVPCCRenderer
-  m_Shader: {fileID: 4800000, guid: 09e047d919c5bf343bc6bce71f103be1, type: 3}
+  m_Name: VPCCSplat
+  m_Shader: {fileID: 4800000, guid: 9537a8350a8b3774b82257d77e0bd0dd, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -31,9 +31,17 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    m_Ints: []
+    m_Ints:
+    - _PointFilter: -1
+    - _ShowDecimationRanges: 0
+    - _UseLinearCorrection: 0
     m_Floats:
+    - _ColorOffset: 0
+    - _ColorScale: 5
+    - _InvSigmaSq: 8
     - _LinearCorrection: 0
-    - _PointSize: 0.01
+    - _MaxSize: 60.4
+    - _PointSize: 2
     m_Colors: []
   m_BuildTextureStacks: []
+  m_AllowLocking: 1

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2024 InterDigital R&D France
+* Copyright (c) 2025 InterDigital CE Patent Holdings SASU
 * Licensed under the License terms of 5GMAG software (the "License").
 * You may not use this file except in compliance with the License.
 * You may obtain a copy of the License at https://www.5g-mag.com/license .
@@ -20,7 +20,7 @@ Shader "IDCC/SortedVPCCRenderer"
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
+        Tags { "RenderType"="Transparent" }
         LOD 100
         Blend SrcAlpha OneMinusSrcAlpha, OneMinusDstAlpha One
 
@@ -64,8 +64,8 @@ Shader "IDCC/SortedVPCCRenderer"
                 InitIndirectDrawArgs(0);
                 v2f o;
                 // uint instanceID = GetIndirectInstanceID(ID);
-                if (vertexID < _PointFilter)
-                {
+                // if (vertexID < _PointFilter)
+                // {
                     uint vert_id = (vertexID % _NumVertex);
                     uint linear_id = vertexID/_NumVertex;
                     // uint linear_id = vertexID - vert_id;
@@ -105,7 +105,7 @@ Shader "IDCC/SortedVPCCRenderer"
                     o.uv = true_uv;
                     o.size = p_size/o.pos.w;
                     return o;
-                }
+                // }
                 o.pos = float4(-10.0f,-10.0f,-10.0f,-10.0f);
                 o.uv = 0;
                 o.size = 0;

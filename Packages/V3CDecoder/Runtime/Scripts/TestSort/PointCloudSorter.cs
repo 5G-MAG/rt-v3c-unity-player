@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2024 InterDigital R&D France
+* Copyright (c) 2025 InterDigital CE Patent Holdings SASU
 * Licensed under the License terms of 5GMAG software (the "License").
 * You may not use this file except in compliance with the License.
 * You may obtain a copy of the License at https://www.5g-mag.com/license .
@@ -168,8 +168,11 @@ public class PointCloudSorter
             m_sortCompute.SetBuffer(m_dispatchKernel, "ModelInfo", m_modelInfo);
             m_sortCompute.SetInt("NumVerts", num_vert_per_points);
 
-            Matrix4x4 MVP = GetMV();
-            m_sortCompute.SetMatrix("MV", MVP);
+            Vector3 cam_obj_pos = m_target.transform.worldToLocalMatrix.MultiplyPoint3x4(m_cam.transform.position);
+            Vector3 cam_obj_dir = m_target.transform.worldToLocalMatrix.MultiplyVector(m_cam.transform.forward);
+
+            m_sortCompute.SetVector("cam_pos", cam_obj_pos);
+            m_sortCompute.SetVector("cam_dir", cam_obj_dir);
             m_sortCompute.SetFloat("zmin", m_cam.nearClipPlane);
             m_sortCompute.SetFloat("zmax", m_cam.farClipPlane);
 
@@ -224,14 +227,6 @@ public class PointCloudSorter
         RenderTexture.active = renderTexture;
         GL.Clear(true, true, Color.clear);
         RenderTexture.active = rt;
-    }
-
-    private Matrix4x4 GetMV()
-    {
-        var M = m_target.localToWorldMatrix;
-        var V = m_cam.worldToCameraMatrix;
-        
-        return  V * M;
     }
 
     float readUintAsFloat(uint uvalue)

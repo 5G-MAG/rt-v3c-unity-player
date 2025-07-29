@@ -7,12 +7,13 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: SplatVPCC
+  m_Name: VPCCSplatGamma
   m_Shader: {fileID: 4800000, guid: 9537a8350a8b3774b82257d77e0bd0dd, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
-  m_InvalidKeywords: []
+  m_InvalidKeywords:
+  - _SHOWDECIMATIONRANGES_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -31,11 +32,17 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    m_Ints: []
+    m_Ints:
+    - _PointFilter: -1
+    - _ShowDecimationRanges: 1
+    - _UseLinearCorrection: 0
     m_Floats:
+    - _ColorOffset: 0
+    - _ColorScale: 5
     - _InvSigmaSq: 8
-    - _LinearCorrection: 1
-    - _PointSize: 1
+    - _LinearCorrection: 0
+    - _MaxSize: 60.4
+    - _PointSize: 2
     m_Colors: []
   m_BuildTextureStacks: []
   m_AllowLocking: 1

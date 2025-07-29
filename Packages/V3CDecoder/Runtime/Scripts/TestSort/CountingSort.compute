@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2024 InterDigital R&D France
+* Copyright (c) 2025 InterDigital CE Patent Holdings SASU
 * Licensed under the License terms of 5GMAG software (the "License").
 * You may not use this file except in compliance with the License.
 * You may obtain a copy of the License at https://www.5g-mag.com/license .
@@ -24,7 +24,10 @@ RWTexture2D<float4> Output; //Sorted UVs
 uint Width, Height; //Size of the input and output textures
 float InvWidth, InvHeight; //Caching the inverse of width and height
 
-float4x4 MV; //Model/View matrix to project the points in the right position
+float4 cam_pos, cam_dir;
+
+//float4x4 M; //Model matrix to project the points in the right position
+//float4x4 MV; //Model/View matrix to project the points in the right position
 float zmin; //Near clipping plane in world units
 float zmax; //Far cliping plane in world units
 
@@ -95,13 +98,17 @@ void ComputeDispatch()
 [numthreads(8,8,1)]
 void ComputeModelRange(uint3 id : SV_DispatchThreadID)
 {
-    //Check the position of the point on screen
-    float4 p_pos = mul(MV, float4(Input[id.xy].xyz, 1.0));
+    //Check the world position of the point
+    //float4 p_pos = mul(M, float4(Input[id.xy].xyz, 1.0));
+    float4 p_pos = float4(Input[id.xy].xyz, 1.0);
     
-    //compute the normalized linear depth
-    float depth = 1 - ((-p_pos.z - zmin) / (zmax - zmin));
+    float3 cam_dist = p_pos.xyz - cam_pos.xyz;
+    float dist = -dot(cam_dist, cam_dir.xyz);
     
-    uint udepth = readFloatAsUint(depth);
+    ////compute the normalized linear depth
+    //float depth = 1 - ((-p_pos.z - zmin) / (zmax - zmin));
+    
+    uint udepth = readFloatAsUint(dist);
     InterlockedMin(ModelInfo[1], udepth);
     InterlockedMax(ModelInfo[2], udepth);
 }
@@ -114,13 +121,15 @@ void ComputeHistModelRange(uint3 id : SV_DispatchThreadID)
     {
     
         //Compute depth
-        float4 p_pos = mul(MV, Input[id.xy]);
-        float depth = 1 - ((-p_pos.z - zmin) / (zmax - zmin));
+        //float4 p_pos = mul(M, float4(Input[id.xy].xyz, 1.0));
+        float4 p_pos = float4(Input[id.xy].xyz, 1.0);
+        float3 cam_dist = p_pos.xyz - cam_pos.xyz;
+        float dist = -dot(cam_dist, cam_dir.xyz);
     
         float min_d = readUintAsFloat(ModelInfo[1]);
         float max_d = readUintAsFloat(ModelInfo[2]);
 
-        float depth_range = (depth - min_d) / (max_d - min_d);
+        float depth_range = (dist - min_d) / (max_d - min_d);
     
         //Get the corresponding slice/key. 
         uint key = (uint) (depth_range * (Range - 1));
@@ -184,7 +193,7 @@ void ComputeUV(uint3 id : SV_DispatchThreadID)
         //Compute where to write the data (i.e. the ordered point)
         uint2 i_uv = uint2(i % Width, i / Width);
 
-        //Compte what data to write (i.e. the uv to sample the pos and col textures)
+        //Compute what data to write (i.e. the uv to sample the pos and col textures)
         float4 uv = float4((float(id.x) + 0.5f) * InvWidth, (float(id.y) + 0.5f) * InvHeight, 0, 1);
         
         Output[i_uv.xy] = uv; 

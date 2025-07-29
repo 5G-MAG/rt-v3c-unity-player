@@ -49,7 +49,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_mainCamera: {fileID: 0}
-  m_initTextureSize: 0
   m_referenceFoV: 60
   m_renderUnityCallback: 0
   m_startMediaId: 0
@@ -176,18 +175,28 @@ MonoBehaviour:
   m_activate: 1
   m_V3CDecoderManager: {fileID: 1689680134900239568}
   m_VPCCModelTransform: {fileID: 2695313041547044943}
-  m_material: {fileID: 2100000, guid: 7c4e2e6a796c20644805bfa033ff023d, type: 2}
-  m_pointSize: 1
-  m_renderMode: 0
+  m_renderMode: 2
   m_decimationLevel: 0
+  m_maxBbox: 2048
+  m_useDynamicDecimation: 0
+  m_r1: 1
+  m_r2: 2
+  m_viewportCullThreshold: 1.35
+  m_showRanges: 0
+  m_mat: {fileID: 2100000, guid: 7c4e2e6a796c20644805bfa033ff023d, type: 2}
+  m_pointSize: 2
+  m_sortedMat: {fileID: 2100000, guid: ff1a4d17b80082b46b7b16367afb30ae, type: 2}
+  m_sortingCompute: {fileID: 7200000, guid: cc2537a3553b6584eb22fd3300f4ce03, type: 3}
+  m_sortingRange: 2048
+  m_sortedPointSize: 2
+  m_pointAlphaFalloff: 1.5
   m_showShadow: 1
   m_ShadowTargetMesh: {fileID: 7443427457130251727}
   m_shadowMat: {fileID: 2100000, guid: f371a4cb1bcaf624a92c9b5092ff5f5d, type: 2}
-  m_shadowResolution: 512
+  m_shadowResolution: 256
   m_shadowColor: {r: 0, g: 0, b: 0, a: 0.5019608}
   m_logNumPoints: 0
   m_useQuestStabilityHack: 0
-  testSort: {fileID: 0}
 --- !u!1 &2172047386744971697
 GameObject:
   m_ObjectHideFlags: 0
@@ -236,11 +245,12 @@ MonoBehaviour:
   m_V3CDecoderManager: {fileID: 1689680134900239568}
   m_targetType: 0
   m_quadTarget: {fileID: 8233137515903942754}
+  m_sphereTarget: {fileID: 0}
   m_fullscreenTarget: {fileID: 4524683540312221299}
-  m_meshRenderMaterial: {fileID: 2100000, guid: 754f250f9f216544e9b8fc3ee9539375,
-    type: 2}
-  m_fullscreenMaterial: {fileID: 2100000, guid: 7d1b3ea66348f5d47ab2710c9fd23cab,
-    type: 2}
+  m_meshRenderMaterial: {fileID: 2100000, guid: 754f250f9f216544e9b8fc3ee9539375, type: 2}
+  m_sphereRenderMaterial: {fileID: 0}
+  m_fullscreenMaterial: {fileID: 2100000, guid: 7d1b3ea66348f5d47ab2710c9fd23cab, type: 2}
+  m_isImmersiveMode: 0
   m_aspectRatio: 1.7777778
 --- !u!1 &3895813999032406690
 GameObject:
@@ -300,6 +310,9 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -373,11 +386,9 @@ MonoBehaviour:
   m_V3CDecoderManager: {fileID: 1689680134900239568}
   m_targetType: 0
   m_fullscreenTarget: {fileID: 4524683540312221299}
-  m_fullscreenMaterial: {fileID: 2100000, guid: 7d1b3ea66348f5d47ab2710c9fd23cab,
-    type: 2}
+  m_fullscreenMaterial: {fileID: 2100000, guid: 7d1b3ea66348f5d47ab2710c9fd23cab, type: 2}
   m_quadTarget: {fileID: 8233137515903942754}
-  m_meshRenderMaterial: {fileID: 2100000, guid: 754f250f9f216544e9b8fc3ee9539375,
-    type: 2}
+  m_meshRenderMaterial: {fileID: 2100000, guid: 754f250f9f216544e9b8fc3ee9539375, type: 2}
 --- !u!1 &4893176444347917954
 GameObject:
   m_ObjectHideFlags: 0
@@ -570,6 +581,9 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
