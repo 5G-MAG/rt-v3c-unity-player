@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2024 InterDigital R&D France
+* Copyright (c) 2025 InterDigital CE Patent Holdings SASU
 * Licensed under the License terms of 5GMAG software (the "License").
 * You may not use this file except in compliance with the License.
 * You may obtain a copy of the License at https://www.5g-mag.com/license .
@@ -31,4 +31,15 @@ public class VPCCSynthesizerInterface
 
     [DllImport("V3CImmersiveSynthesizerVPCC")]
     public static extern void SetMaxBbox(float size);
+
+    [DllImport("V3CImmersiveSynthesizerVPCC")]
+    public static extern void SetMVP(float[] MVP);
+
+    [DllImport("V3CImmersiveSynthesizerVPCC")]
+    public static extern void setDynamicDecimation(bool useDD);
+
+    [DllImport("V3CImmersiveSynthesizerVPCC")]
+    public static extern void setDecimationRanges(float r1, float r2, float vp_cull_factor);
+
+
 }

@@ -1,7 +1,9 @@
 {
     "name": "interdigital-philips.v3cdecoder.runtime",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "GUID:f64c9ebcd7899c3448a08dc9f9ddbe30"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
@@ -9,6 +11,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.meta.xr.sdk.core",
+            "expression": "76.0.0",
+            "define": "OVR_Input"
+        }
+    ],
     "noEngineReferences": false
 }

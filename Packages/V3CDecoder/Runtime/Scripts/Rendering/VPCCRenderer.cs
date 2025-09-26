@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2024 InterDigital R&D France
+* Copyright (c) 2025 InterDigital CE Patent Holdings SASU
 * Licensed under the License terms of 5GMAG software (the "License").
 * You may not use this file except in compliance with the License.
 * You may obtain a copy of the License at https://www.5g-mag.com/license .
@@ -19,7 +19,7 @@ namespace IDCC.V3CDecoder
     {
         public enum Decimation { None, Two, Four };
 
-        public enum RenderingMode { GLPoints, RoundSplatsTri, SortedBlend}
+        public enum RenderingMode { GLPoints, SortedBlend}
 
         public bool m_activate = true;
         public V3CDecoderManager m_V3CDecoderManager;
@@ -27,23 +27,31 @@ namespace IDCC.V3CDecoder
         public PointCloudSorter m_PointCloudSorter;
 
         [Header("Point Cloud Rendering")]
-        private RenderingMode m_renderMode = RenderingMode.GLPoints;
-        private Decimation m_decimationLevel = Decimation.None;
+        public RenderingMode m_renderMode = RenderingMode.GLPoints;
+        public Decimation m_decimationLevel = Decimation.None;
         private int m_decimationValue = 1;
-        private float m_maxBbox = 1024.0f;
+        public float m_maxBbox = 1024.0f;
+        public bool m_QuestColorCorrection = false;
+
+        [Header("Dynamic Decimation")]
+        public bool m_useDynamicDecimation = false;
+        public float m_r1=15;
+        public float m_r2=30;
+        public float m_viewportCullThreshold;
+        public bool m_showRanges = false;
 
         [Header("Rendering params")]
         public Material m_mat;
         public float m_pointSize = 2;
 
         [Header("Sorted Rendering params")]
-        private Material m_sortedMat;
-        private ComputeShader m_sortingCompute;
+        public Material m_sortedMat;
+        public ComputeShader m_sortingCompute;
         [Tooltip("Number of slice to sort the points into")]
-        private int m_sortingRange;
-        private float m_sortedPointSize = 2;
+        public int m_sortingRange;
+        public float m_sortedPointSize = 2;
         [Tooltip("Points are drawn as round splats with a gaussian alpha, this is 1 / variance")]
-        private float m_pointAlphaFalloff = 8;
+        public float m_pointAlphaFalloff = 8;
 
         [Header("Shadow Options")]
         public bool m_showShadow = true;
@@ -74,13 +82,10 @@ namespace IDCC.V3CDecoder
         private Vector3 m_ShadowDefaultPosition;
 
         //Rendering setup
-        private GraphicsBuffer m_IndirectArgs;            
+        private GraphicsBuffer m_IndirectArgs;
         private RenderParams m_rp;
         private Camera m_render_cam;
         private int m_numVertPerPoint = 1;
-
-        //private CommandBuffer m_commanBuffer;
-        
 
         public void Awake()
         {
@@ -89,16 +94,20 @@ namespace IDCC.V3CDecoder
             m_V3CDecoderManager.OnMediaReady += SetupRendering;
             m_V3CDecoderManager.OnV3CPreRender += UpdateVertexPerPoint;
             m_V3CDecoderManager.OnV3CPreRender += ResizeTex;
+            m_V3CDecoderManager.OnV3CPreRender += UpdateCamera;
             m_V3CDecoderManager.OnV3CPostRender += Draw;
         }
 
         public void OnDestroy()
         {
+            ReleaseTextures();
+
             m_V3CDecoderManager.OnMediaRequest -= HideShadow;
             m_V3CDecoderManager.OnPreMediaReady -= ReinitRendering;
             m_V3CDecoderManager.OnMediaReady -= SetupRendering;
             m_V3CDecoderManager.OnV3CPreRender -= UpdateVertexPerPoint;
             m_V3CDecoderManager.OnV3CPreRender -= ResizeTex;
+            m_V3CDecoderManager.OnV3CPreRender -= UpdateCamera;
             m_V3CDecoderManager.OnV3CPostRender -= Draw;
         }
 
@@ -173,6 +182,7 @@ namespace IDCC.V3CDecoder
                         buff[0].vertexCountPerInstance = 0;
                         buff[0].instanceCount = 1;
                         m_IndirectArgs.SetData(buff);
+                        
 
                         IntPtr ptr = m_IndirectArgs.GetNativeBufferPtr();
                         Debug.Log($"CommandBuffer ID: {ptr}");
@@ -182,13 +192,10 @@ namespace IDCC.V3CDecoder
 
                         m_render_cam = data.m_mainCamera;
 
-                        /////DEBUG!!!!
-                        if (m_renderMode != RenderingMode.GLPoints)
-                        {
-                            m_PointCloudSorter = new PointCloudSorter();
-                            m_PointCloudSorter.Setup(m_sortingCompute, m_render_cam, m_VPCCModelTransform, m_sortingRange);
-                            m_PointCloudSorter.Init(m_v3cPointPosTex);
-                        }
+                        m_PointCloudSorter = new PointCloudSorter();
+                        m_PointCloudSorter.Setup(m_sortingCompute, m_render_cam, m_VPCCModelTransform, m_sortingRange);
+                        m_PointCloudSorter.Init(m_v3cPointPosTex);
+                        
                     }
                     else
                     {
@@ -202,7 +209,7 @@ namespace IDCC.V3CDecoder
                 DecoderPluginInterface.SetCanvasProperties(m_v3cPointColTex.GetNativeTexturePtr(), (uint)m_v3cPointColTex.width, (uint)m_v3cPointColTex.height, (uint)TextureFormat.RGBAFloat);
                 VPCCSynthesizerInterface.SetPositionProperties(m_v3cPointPosTex.GetNativeTexturePtr(), (uint)m_v3cPointPosTex.width, (uint)m_v3cPointPosTex.height, (uint)TextureFormat.RGBAFloat);
                 VPCCSynthesizerInterface.SetShadowProperties(m_v3cShadowTex.GetNativeTexturePtr(), (uint)m_v3cShadowTex.width, (uint)m_v3cShadowTex.height, (uint)TextureFormat.RGBAFloat);
-
+                VPCCSynthesizerInterface.setDynamicDecimation(m_useDynamicDecimation);
                 m_render_cam = data.m_mainCamera;
 
                 m_isSetup = true;
@@ -218,7 +225,6 @@ namespace IDCC.V3CDecoder
                     case RenderingMode.GLPoints:
                         m_numVertPerPoint = 1;
                         break;
-                    case RenderingMode.RoundSplatsTri:
                     case RenderingMode.SortedBlend:
                         m_numVertPerPoint = 3;
                         break;
@@ -262,8 +268,23 @@ namespace IDCC.V3CDecoder
                         break;
                 }
                 VPCCSynthesizerInterface.SetDecimationLevel(m_decimationValue);
-
+                VPCCSynthesizerInterface.setDynamicDecimation(m_useDynamicDecimation);
                 VPCCSynthesizerInterface.SetMaxBbox(m_maxBbox);
+            }
+        }
+
+        private void UpdateCamera()
+        {
+            if (m_activate && m_isSetup && m_render_cam != null)
+            {
+                Matrix4x4 MVP_mat = m_render_cam.projectionMatrix * m_render_cam.worldToCameraMatrix * m_VPCCModelTransform.localToWorldMatrix;
+                float[] mvp_arr = new float[16];
+                for (int i = 0; i < 16; i++)
+                {
+                    mvp_arr[i] = MVP_mat.transpose[i];
+                }
+                VPCCSynthesizerInterface.SetMVP(mvp_arr);
+                VPCCSynthesizerInterface.setDecimationRanges(m_r1 / m_maxBbox, m_r2 / m_maxBbox, m_viewportCullThreshold);
             }
         }
 
@@ -303,10 +324,6 @@ namespace IDCC.V3CDecoder
                         m_useSort = true;
                         topo = MeshTopology.Triangles;
                         break;
-                    case RenderingMode.RoundSplatsTri:
-                        m_useSort = false;
-                        topo = MeshTopology.Triangles;
-                        break;
                     case RenderingMode.GLPoints:
                     default:
                         m_useSort = false;
@@ -316,9 +333,11 @@ namespace IDCC.V3CDecoder
 
                 if (m_logNumPoints || m_useQuestStabilityHack)
                 {
-                    //KEEP THIS!!!!!
-                    //GetData force synchronisation between CPU and GPU, and removing this will break the MetaQuest Passthrough demo (why? the hell if I know!)
-                    //You MAY comment it when targetting another target (as it's slightly degrading performances), but it's not tested (yet)
+                    //On really big models with high quality rendering, the Quest may struggle to render,
+                    //dropping to absymal framerate and not managing to track content anymore.
+                    //This can also happen if the Scene support is enabled, or any other processing heavy features.
+                    //This seems to be caused by GPU/CPU synchronisation issues.
+                    //GetData force synchronisation between CPU and GPU. This might improve framerate and tracking stability.
                     GraphicsBuffer.IndirectDrawArgs[] data = new GraphicsBuffer.IndirectDrawArgs[1];
                     m_IndirectArgs.GetData(data);
 
@@ -330,50 +349,51 @@ namespace IDCC.V3CDecoder
 
                 if (m_useSort)
                 {
-
-
                     m_PointCloudSorter.Compute(m_IndirectArgs, m_numVertPerPoint);//, (int)data[0].vertexCountPerInstance / m_numVertPerPoint);
 
-                    m_sortedRP.camera = m_render_cam;
+                    m_sortedRP.camera = null;
                     m_sortedRP.matProps.SetTexture("_UV", m_PointCloudSorter.m_output);
                     m_sortedRP.matProps.SetTexture("_PosTex", m_v3cPointPosTex);
                     m_sortedRP.matProps.SetTexture("_ColTex", m_v3cPointColTex);
-                    m_sortedRP.matProps.SetFloat("_PointSize", m_sortedPointSize * m_decimationValue);
-                    m_sortedRP.matProps.SetFloat("_Scale", m_VPCCModelTransform.lossyScale.x);
+                    m_sortedRP.matProps.SetFloat("_PointSize", m_sortedPointSize);
                     m_sortedRP.matProps.SetInteger("_Width", m_v3cPointPosTex.width);
                     m_sortedRP.matProps.SetInteger("_Height", m_v3cPointPosTex.height);
                     m_sortedRP.matProps.SetMatrix("_LocalToWorld", m_VPCCModelTransform.localToWorldMatrix);
+                    m_sortedRP.matProps.SetFloat("_LocalScale", m_VPCCModelTransform.lossyScale.x);
                     m_sortedRP.matProps.SetInteger("_NumVertex", m_numVertPerPoint);
                     m_sortedRP.matProps.SetFloat("_InvSigmaSq", m_pointAlphaFalloff);
+                    m_sortedRP.matProps.SetFloat("_InvMaxBbox", 1.0f/m_maxBbox);
+                    m_sortedRP.matProps.SetInt("_ShowDecimationRanges", m_showRanges ? 1 : 0);
+                    m_sortedRP.matProps.SetInt("_UseLinearCorrection", m_QuestColorCorrection ? 1 : 0);
 
                     Graphics.RenderPrimitivesIndirect(m_sortedRP, topo, m_IndirectArgs, 1, 0);
                 }
                 else 
                 {
-
-                    m_rp.camera = m_render_cam;
+                    m_rp.camera = null;
                     m_rp.matProps.SetTexture("_PosTex", m_v3cPointPosTex);
                     m_rp.matProps.SetTexture("_ColTex", m_v3cPointColTex);
-                    m_rp.matProps.SetFloat("_PointSize", m_pointSize * m_decimationValue);
-                    m_rp.matProps.SetFloat("_Scale", m_VPCCModelTransform.lossyScale.x);
+                    m_rp.matProps.SetFloat("_PointSize", m_pointSize);
+                    m_rp.matProps.SetInt("_ShowDecimationRanges", m_showRanges?1 : 0);
                     m_rp.matProps.SetInteger("_Width", m_v3cPointPosTex.width);
                     m_rp.matProps.SetInteger("_Height", m_v3cPointPosTex.height);
                     m_rp.matProps.SetMatrix("_LocalToWorld", m_VPCCModelTransform.localToWorldMatrix);
+                    m_rp.matProps.SetFloat("_LocalScale", m_VPCCModelTransform.lossyScale.x);
                     m_rp.matProps.SetInteger("_NumVertex", m_numVertPerPoint);
+                    m_rp.matProps.SetFloat("_InvMaxBbox", 1.0f / m_maxBbox);
+                    m_rp.matProps.SetInt("_UseLinearCorrection", m_QuestColorCorrection ? 1 : 0);
 
                     Graphics.RenderPrimitivesIndirect(m_rp, topo, m_IndirectArgs, 1, 0);
                 }
-
-                
             }
         }
 
         public void ReleaseTextures()
         {
-            m_v3cPointColTex.Release();
-            m_v3cPointPosTex.Release();
-            m_v3cShadowTex.Release();
-            m_IndirectArgs.Release();
+            m_v3cPointColTex?.Release();
+            m_v3cPointPosTex?.Release();
+            m_v3cShadowTex?.Release();
+            m_IndirectArgs?.Release();
             m_texAllocFlag = false;
         }
 
@@ -382,26 +402,14 @@ namespace IDCC.V3CDecoder
             m_ShadowTargetMesh.transform.localPosition = m_ShadowDefaultPosition + Vector3.up * offset;
         }
 
-        public void SetRenderMode(int val)
+        public void SetRenderMode(RenderingMode val)
         {
-            if (val == 1)
-            {
-                m_renderMode = RenderingMode.RoundSplatsTri;
-            }
-            else if (val == 0)
-            {
-                m_renderMode = RenderingMode.GLPoints;
-            }
-            else
-            {
-                m_renderMode = RenderingMode.SortedBlend;
-            }
+            m_renderMode = val;
 		}
 
         public void SetMaxBbox(float size)
         {
             m_maxBbox = size;
-
         }
     }
 }

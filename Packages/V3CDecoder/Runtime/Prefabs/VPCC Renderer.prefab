@@ -80,13 +80,26 @@ MonoBehaviour:
   m_activate: 1
   m_V3CDecoderManager: {fileID: 0}
   m_VPCCModelTransform: {fileID: 6024832306439125839}
+  m_renderMode: 2
+  m_decimationLevel: 0
+  m_maxBbox: 2048
+  m_useDynamicDecimation: 0
+  m_r1: 1
+  m_r2: 2
+  m_viewportCullThreshold: 1.35
+  m_showRanges: 0
   m_mat: {fileID: 2100000, guid: 7c4e2e6a796c20644805bfa033ff023d, type: 2}
   m_pointSize: 2
+  m_sortedMat: {fileID: 2100000, guid: ff1a4d17b80082b46b7b16367afb30ae, type: 2}
+  m_sortingCompute: {fileID: 7200000, guid: cc2537a3553b6584eb22fd3300f4ce03, type: 3}
+  m_sortingRange: 2048
+  m_sortedPointSize: 2
+  m_pointAlphaFalloff: 1.5
   m_showShadow: 1
-  m_ShadowTargetMesh: {fileID: 2961675188606976171}
+  m_ShadowTargetMesh: {fileID: 0}
   m_shadowMat: {fileID: 2100000, guid: f371a4cb1bcaf624a92c9b5092ff5f5d, type: 2}
-  m_shadowResolution: 512
-  m_shadowColor: {r: 0, g: 0, b: 0, a: 0}
+  m_shadowResolution: 256
+  m_shadowColor: {r: 0, g: 0, b: 0, a: 0.5019608}
   m_logNumPoints: 0
   m_useQuestStabilityHack: 0
 --- !u!1 &6917515250140401252

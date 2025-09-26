@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2024 InterDigital R&D France
+* Copyright (c) 2025 InterDigital CE Patent Holdings SASU
 * Licensed under the License terms of 5GMAG software (the "License").
 * You may not use this file except in compliance with the License.
 * You may obtain a copy of the License at https://www.5g-mag.com/license .
@@ -16,7 +16,8 @@ Shader "IDCC/VPCCRenderer"
         _PosTex ("Pos Texture", 2D) = "white" {}
         _ColTex ("Col Texture", 2D) = "white" {}
         _PointSize("Point Size", Float) = 1.0
-        _LinearCorrection("Linear Correction", Range(0.0,1.0)) = 0.0
+        [Toggle] _ShowDecimationRanges ("Show Dynamic Decimation Ranges", Integer) = 0
+        [Toggle] _UseLinearCorrection ("Use Linear Color Correction", Integer) = 0
     }
     SubShader
     {
@@ -42,80 +43,69 @@ Shader "IDCC/VPCCRenderer"
                 float2 uv_splat : TEXCOORD1;
                 float4 pos : SV_POSITION;
                 float size : PSIZE;
+                nointerpolation float4 dec_col : TEXCOORD2;
             };
 
             sampler2D _PosTex;
             sampler2D _ColTex;
             float4x4 _LocalToWorld;
+            float _LocalScale;
             uint _NumVertex;
             uint _Width;
             uint _Height;
             float _PointSize;
-
-            static float scale = 1.0/1024.0;
-            static float3 tri[] = {float3(0.0,2.0,0.0), float3(sqrt(3.0),-1.0,0.0), float3(-sqrt(3.0),-1.0,0.0)};
+            int _ShowDecimationRanges;
+            float _InvMaxBbox;
 
             v2f vert (uint vertexID: SV_VertexID, uint ID : SV_InstanceID)
             {
                 InitIndirectDrawArgs(0);
                 v2f o;
-                // uint instanceID = GetIndirectInstanceID(ID);
-
+                
                 uint vert_id = (vertexID % _NumVertex);
                 uint linear_id = vertexID/_NumVertex;
-                // uint linear_id = vertexID - vert_id;
                 uint2 coord;
                 coord.x = linear_id % _Width;
                 coord.y = linear_id / _Width;
                 float2 uv = float2((float(coord.x)+0.5) / _Width, (float(coord.y) + 0.5) / _Height);
 
                 float4 pos = tex2Dlod(_PosTex, float4(uv.xy, 0.0, 0.0));
-                
-                const float3x3 local_rot_scale = float3x3 (_LocalToWorld[0][0], _LocalToWorld[0][1], _LocalToWorld[0][2],
-                    _LocalToWorld[1][0], _LocalToWorld[1][1], _LocalToWorld[1][2],
-                    _LocalToWorld[2][0], _LocalToWorld[2][1], _LocalToWorld[2][2]);
+                float p_size =  _PointSize * _LocalScale * 1024 * _InvMaxBbox * pos.a ;
 
-                const float local_scale = length(mul(local_rot_scale, float3(1, 1, 1)));
-                const float p_size =  _PointSize * local_scale;
 
-                float4 s_pos;
-                if (_NumVertex == 3)
-                {
-                    float4 v_pos =  mul(UNITY_MATRIX_V, mul(_LocalToWorld, float4(pos.xyz, 1.0)));
-                    v_pos = v_pos + float4(tri[vert_id]*scale*p_size, 0);
-                    o.uv_splat = tri[vert_id].xy;
-                    s_pos = mul(UNITY_MATRIX_P, v_pos);
-                }
-                else
-                {
-                    s_pos = mul(UNITY_MATRIX_VP, mul(_LocalToWorld, float4(pos.xyz, 1.0)));
-                    o.uv_splat = float2(0.0, 0.0);
-                }
-                
+                float4 s_pos = mul(UNITY_MATRIX_VP, mul(_LocalToWorld, float4(pos.xyz, 1.0)));
+                o.uv_splat = float2(0.0, 0.0);
+
                 o.pos = float4(s_pos.x * (pos.a > 0.5) - 100 * (pos.a < 0.5), s_pos.y, s_pos.z, s_pos.w);
                 o.uv = uv;
                 o.size = p_size/o.pos.w;
+
+                half4 col = tex2Dlod(_ColTex, float4(uv.xy, 0.0, 0.0));
+                if(_ShowDecimationRanges){
+                    o.dec_col = col * half4(pos.w < 1.5, pos.w > 1.5 && pos.w < 2.5, pos.w > 2.5 && pos.w < 4.5, 1.0 );
+                }
+                else{
+                    o.dec_col = col;
+                }
                 return o;
             }
 
-            float _LinearCorrection;
+            int _UseLinearCorrection;
 
-            fixed4 frag (v2f i) : SV_Target
+            half4 frag (v2f i) : SV_Target
             {
-                
-                if (_NumVertex == 3){
-                    if (i.uv_splat.x*i.uv_splat.x + i.uv_splat.y*i.uv_splat.y >1){
-                        discard;
-                    }
+                half3 sRGB = i.dec_col;
+                half4 col;
+                if (_UseLinearCorrection){
+                    half3 RGB = sRGB * (sRGB * (sRGB * 0.305306011 + 0.682171111) + 0.012522878);
+                    col = half4(RGB, 1.0);
                 }
+                else{
+                    col= half4(sRGB, 1.0);
+                }
+                return col;
 
-                fixed4 sRGBA = tex2D(_ColTex, i.uv);
-                fixed3 sRGB = sRGBA.rgb;
-                float3 RGB = sRGB * (sRGB * (sRGB * 0.305306011 + 0.682171111) + 0.012522878);
-                return fixed4((_LinearCorrection) * RGB + (1 - _LinearCorrection) * sRGBA.rgb, sRGBA.a);
 
-
-                // return pow(col, 1 + _LinearCorrection*1.2);
             }
             ENDCG
         }

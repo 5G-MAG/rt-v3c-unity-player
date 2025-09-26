@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2024 InterDigital R&D France
+* Copyright (c) 2025 InterDigital CE Patent Holdings SASU
 * Licensed under the License terms of 5GMAG software (the "License").
 * You may not use this file except in compliance with the License.
 * You may obtain a copy of the License at https://www.5g-mag.com/license .
@@ -50,9 +50,6 @@ namespace IDCC.V3CDecoder
 
         public event Action<string> OnInit = delegate { };
 
-        //Event sent when render textures are created
-        public event Action<V3CRenderData> OnTextureCreated = delegate { };
-
         //Event sent when requesting a new media
         public event Action OnMediaRequest = delegate { };
 
@@ -60,6 +57,9 @@ namespace IDCC.V3CDecoder
         public event Action<V3CRenderData> OnPreMediaReady = delegate { };
         public event Action<V3CRenderData> OnMediaReady = delegate { };
         public event Action<V3CRenderData> OnPostMediaReady = delegate { };
+
+        //Event sent when the decoding is paused/unpaused
+        public event Action<bool> OnPause = delegate { };
 
         //Propagate Unity Render Events (accessible natively only on GameObject attached to camera, but not anymore)
         public event Action OnV3CPreRender = delegate { };
@@ -71,7 +71,6 @@ namespace IDCC.V3CDecoder
         [Header("Rendering")]
 
         public Camera m_mainCamera;
-        public TextureSize m_initTextureSize;
         public float m_referenceFoV = 60.0f;
         public V3CRenderUnityCallback m_renderUnityCallback;
         public int m_startMediaId = 0;
@@ -82,6 +81,7 @@ namespace IDCC.V3CDecoder
         public bool m_isInit { get; private set; }
         public bool m_isStarted { get; private set; }
         public bool m_isMediaReady { get; private set; }
+        public bool m_isPaused { get; private set; }
 
         private int m_currentMediaId = -1;
         private int m_requestedMediaId = -1;
@@ -108,6 +108,9 @@ namespace IDCC.V3CDecoder
             m_isInit = false;
             m_isStarted = false;
             m_isMediaReady = false;
+            m_isPaused = false;
+            //QualitySettings.vSyncCount = 0;
+
         }
 
         private void Start()
@@ -261,6 +264,19 @@ namespace IDCC.V3CDecoder
             }
         }
 
+
+        public void TogglePlayPause()
+        {
+            Pause(!m_isPaused);
+        }
+
+        public void Pause(bool is_paused)
+        {
+            DecoderPluginInterface.OnPauseEvent(is_paused);
+            m_isPaused = is_paused;
+            OnPause(m_isPaused);
+        }
+
         public void Stop()
         {
             //Stop the decoder by loading an invalid index
@@ -302,6 +318,8 @@ namespace IDCC.V3CDecoder
                         OnPreMediaReady(m_renderData);
                         OnMediaReady(m_renderData);
                         OnPostMediaReady(m_renderData);
+
+                        Pause(false);
 
                         Debug.Log($"Media {m_requestedMediaId} Ready, type {m_mediaType}");
                     }
