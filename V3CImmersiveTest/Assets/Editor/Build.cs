@@ -11,6 +11,7 @@
 
 using UnityEditor;
 using UnityEditor.Build;
+using UnityEditor.Build.Reporting;
 using System;
 using System.Collections.Generic;
 
@@ -56,16 +57,27 @@ class Build
             {
                 PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.InterDigital."+name);
             }
+            bool succeeded = false;
             try
             {
-                BuildPipeline.BuildPlayer(buildPlayerOptions);
+                var report = BuildPipeline.BuildPlayer(buildPlayerOptions);
+                succeeded = report.summary.result == BuildResult.Succeeded;
+                Console.WriteLine($"Build result: {report.summary.result}, {report.summary.totalErrors} errors");
             }
             catch (Exception e)
             {
                 PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, old_name);
                 Console.WriteLine($"Build failed: {e.Message}");
             }
-            Console.WriteLine("Build complete \\o/");
+            if (succeeded)
+            {
+                Console.WriteLine("Build complete \\o/");
+            }
+            else
+            {
+                Console.WriteLine("Build did not succeed");
+                EditorApplication.Exit(1);
+            }
         }
     }
 
