@@ -23,6 +23,8 @@ namespace IDCC.V3CDecoder.Demo
         //private bool m_isStarted = false;
         private int m_mediaIndex = 0;
 
+        public int MediaIndex => m_mediaIndex;
+
         private bool m_isPaused = false;
 
         private uint m_errorLevel = 0;
@@ -42,7 +44,13 @@ namespace IDCC.V3CDecoder.Demo
 
         private void Update()
         {
-            if (m_errorId != 0)
+            if (m_errorId != 0 && V3CPlayerHud.Instance != null)
+            {
+                // the HUD shows errors itself
+                m_errorLevel = 0;
+                m_errorId = 0;
+            }
+            else if (m_errorId != 0)
             {
                 ErrorManager errorManager = errorUI.GetComponent<ErrorManager>();
                 errorUI.SetActive(true);
@@ -66,6 +74,19 @@ namespace IDCC.V3CDecoder.Demo
             {
                 m_v3cDecoder.StartPlugin();
             }
+        }
+
+        // Plays the given playlist entry; starts the plugin first when it is not running yet.
+        public void PlayMedia(int index)
+        {
+            int num_media = (int)DecoderPluginInterface.GetNumberOfMedia();
+            if (index < 0 || index >= num_media)
+            {
+                return;
+            }
+            m_mediaIndex = index;
+            Debug.Log($"Playing media at index {m_mediaIndex}");
+            m_v3cDecoder.ChangeMedia(m_mediaIndex);
         }
 
         public void LoadNextMedia()
