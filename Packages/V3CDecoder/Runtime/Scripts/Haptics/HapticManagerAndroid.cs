@@ -40,8 +40,13 @@ public class HapticManagerAndroid : HapticManager
             hapticEvent.timer += Time.deltaTime*1000f;
             float ratio = hapticEvent.timer / hapticEvent.endTime;
             int intensity = (int)Mathf.Lerp(hapticEvent.startIntensity, hapticEvent.endIntensity, ratio);
-            Vibrator.Cancel();
-            Vibrator.Vibrate((long)(hapticEvent.endTime - hapticEvent.timer), intensity);
+            // the timer was just advanced, so little or nothing may be left; VibrationEffect rejects durations <= 0
+            long remaining = (long)(hapticEvent.endTime - hapticEvent.timer);
+            if (remaining > 0)
+            {
+                Vibrator.Cancel();
+                Vibrator.Vibrate(remaining, intensity);
+            }
         }
     }
 
