@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "displayName": "V3C Decoder",
   "description": "This package contains all the assets needed for the decoding and rendering of V3C content",
-  "unity": "2020.3",
-  "unityRelease": "22f1",
+  "unity": "6000.0",
+  "unityRelease": "25f1",
   "author": {
     "name": "InterDigital-Philips",
     "email": "julien.mulard@interdigital.com",
