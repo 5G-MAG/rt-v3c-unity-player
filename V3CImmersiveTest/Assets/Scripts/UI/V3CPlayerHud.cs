@@ -644,7 +644,31 @@ namespace IDCC.V3CDecoder.Demo
             catch (Exception) { return false; }
         }
 
-        private float m_statsNext;
+        private float m_statsNext, m_rateTime;
+        private ulong m_rateFrames, m_rateBytes;
+        private string m_counterText = "";
+
+        // decoder counters: presented frame rate, late frames, received chunks and their rate, each rate averaged
+        // over about three seconds (segments arrive in bursts, so a shorter window often sees none)
+        private string DecoderCounters(bool streamed)
+        {
+            ulong frames, late, lastLate, chunks, bytes;
+            if (!DecoderPluginInterface.TryGetDecoderStats(out frames, out late, out lastLate, out chunks, out bytes)) return "";
+            float now = Time.unscaledTime;
+            if (m_rateTime == 0f || frames < m_rateFrames || bytes < m_rateBytes)
+            {
+                m_rateTime = now; m_rateFrames = frames; m_rateBytes = bytes;     // first reading, or a new title
+                return "";
+            }
+            float dt = now - m_rateTime;
+            if (dt < 3f) return "";
+            float fps = (frames - m_rateFrames) / dt;
+            float mbit = (bytes - m_rateBytes) * 8f / dt / 1e6f;
+            m_rateTime = now; m_rateFrames = frames; m_rateBytes = bytes;
+            return $"Decoded  {fps:0} fps, {late} late\n" +
+                   (streamed ? $"Chunks   {chunks} so far, {mbit:0.0} Mbit/s\n" : "Chunks   -, read from the device\n");
+        }
+
         private void UpdateStats(MediaInfo info, bool started, bool paused)
         {
             m_fps = Mathf.Lerp(m_fps, 1f / Mathf.Max(Time.unscaledDeltaTime, 0.0001f), 0.05f);
@@ -652,8 +676,11 @@ namespace IDCC.V3CDecoder.Demo
             if (!m_statsOn || Time.unscaledTime < m_statsNext) return;
             m_statsNext = Time.unscaledTime + 0.5f;
             string state = !started ? "stopped" : (m_isLoading ? "loading" : (paused ? "paused" : "playing"));
+            string counters = DecoderCounters(info != null && info.Streamed);
+            if (counters.Length > 0) m_counterText = counters;
             m_statsText.text =
                 $"Render   {m_fps:0} fps\n" +
+                m_counterText +
                 $"State    {state}\n" +
                 $"Title    {(info != null ? info.Title : "-")}\n" +
                 $"Source   {(info != null ? (info.Streamed ? "streaming " + info.Origin : "device") : "-")}\n" +
@@ -1142,7 +1169,7 @@ namespace IDCC.V3CDecoder.Demo
 
         private void BuildStats(RectTransform root)
         {
-            var r = Rect("Stats", root, TR, TR, TR, new Vector2(-28, -120), new Vector2(430, 252));
+            var r = Rect("Stats", root, TR, TR, TR, new Vector2(-28, -120), new Vector2(470, 330));
             m_stats = Group(r, 0f);
             m_stats.blocksRaycasts = false; m_stats.interactable = false;
             Img(r, m_round, new Color(0f, 0f, 0f, 0.62f), true, 16).pixelsPerUnitMultiplier = 16f / 18f;

@@ -51,6 +51,28 @@ public class DecoderPluginInterface
         mediaName.Capacity = mediaName.Capacity < c ? c : mediaName.Capacity; 
     }
 
+    // Playback counters of the plugin: frames presented, late frames, lateness of the last late frame (ms),
+    // chunks received and their payload bytes. They only grow; subtract two readings for a rate.
+    [DllImport("V3CImmersiveDecoderVideo")]
+    private static extern void GetDecoderStats(ulong[] values, int count);
+
+    // False when the plugin is older than this call (it has no GetDecoderStats).
+    public static bool TryGetDecoderStats(out ulong framesPresented, out ulong framesLate, out ulong lastLateMs, out ulong chunks, out ulong bytes)
+    {
+        framesPresented = framesLate = lastLateMs = chunks = bytes = 0;
+        try
+        {
+            var v = new ulong[5];
+            GetDecoderStats(v, v.Length);
+            framesPresented = v[0]; framesLate = v[1]; lastLateMs = v[2]; chunks = v[3]; bytes = v[4];
+            return true;
+        }
+        catch (EntryPointNotFoundException)
+        {
+            return false;
+        }
+    }
+
     [DllImport("V3CImmersiveDecoderVideo")]
     public static extern IntPtr GetRenderEventFunc();
 
