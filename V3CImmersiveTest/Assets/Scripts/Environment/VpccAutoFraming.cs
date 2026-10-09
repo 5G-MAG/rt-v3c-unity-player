@@ -50,12 +50,27 @@ namespace IDCC.V3CDecoder
             m_running = data.m_mediaType == DecoderPluginInterface.MediaType.VPCC ? StartCoroutine(Frame(data.m_mediaId)) : null;
         }
 
+        private class Retry { public bool Again; }
+
+        // The first frames of a title can still be empty or collapsed onto a line while the decoder warms up, which gives
+        // a box with no width or depth. Such a measurement is thrown away and taken again, once a second, for as long as
+        // the same title plays.
         private IEnumerator Frame(int mediaId)
+        {
+            for (float wait = 0.9f; ; wait = 1f)
+            {
+                var retry = new Retry();
+                yield return FrameOnce(mediaId, wait, retry);
+                if (!retry.Again) yield break;
+            }
+        }
+
+        private IEnumerator FrameOnce(int mediaId, float wait, Retry retry)
         {
             var renderer = FindFirstObjectByType<VPCCRenderer>();
             var cameraController = FindFirstObjectByType<V3CCameraController>();
             if (renderer == null || cameraController == null) yield break;
-            yield return new WaitForSeconds(0.9f);
+            yield return new WaitForSeconds(wait);
             var tex = renderer.PointPositionTexture;
             if (tex == null || m_manager.GetRenderData().m_mediaId != mediaId) yield break;
 
@@ -84,6 +99,15 @@ namespace IDCC.V3CDecoder
             }
             var lo = new Vector3(Quantile(hist, 0, valid, 0.005f, mn.x, mx.x), Quantile(hist, 1, valid, 0.005f, mn.y, mx.y), Quantile(hist, 2, valid, 0.005f, mn.z, mx.z));
             var hi = new Vector3(Quantile(hist, 0, valid, 0.995f, mn.x, mx.x), Quantile(hist, 1, valid, 0.995f, mn.y, mx.y), Quantile(hist, 2, valid, 0.995f, mn.z, mx.z));
+
+            // an extent of no more than one histogram bin on an axis is no extent at this resolution
+            float bin = 1f / (Bins - 1);
+            if (hi.x - lo.x <= (mx.x - mn.x) * bin || hi.y - lo.y <= (mx.y - mn.y) * bin || hi.z - lo.z <= (mx.z - mn.z) * bin)
+            {
+                Debug.Log($"VpccAutoFraming: {valid} points but no extent on every axis (from {lo} to {hi}), measuring again");
+                retry.Again = true;
+                yield break;
+            }
 
             var model = renderer.ModelTransform;
             if (model == null) yield break;
