@@ -27,6 +27,30 @@ public class V3CCameraController: MonoBehaviour
     private DecoderPluginInterface.MediaType contentType;
     private Camera m_cam;
     public bool controlsEnabled = false;
+
+    // Default framing of V-PCC content: orbit pivot (world) and camera distance in front of it.
+    // The values frame the bundled footprod test sequence, whose figure is about 0.6 m tall and stands low
+    // and slightly left in the unit cube the renderer places 2 to 3 m in front of the camera.
+    public Vector3 m_vpccFocus = new Vector3(-0.28f, -0.71f, 2.5f);
+    public float m_vpccDistance = 1.25f;
+    private readonly Vector3 m_defaultVpccFocus = new Vector3(-0.28f, -0.71f, 2.5f);
+    private const float m_defaultVpccDistance = 1.25f;
+
+    // Frames V-PCC content measured from its own points: orbit pivot and camera distance in front of it.
+    public void SetVpccFraming(Vector3 focus, float distance)
+    {
+        m_vpccFocus = focus;
+        m_vpccDistance = distance;
+        ApplyVpccFraming();
+    }
+
+    private void ApplyVpccFraming()
+    {
+        if (m_VPCCCamTarget == null || m_cam == null) return;
+        m_VPCCCamTarget.position = m_vpccFocus;
+        m_cam.transform.rotation = Quaternion.identity;
+        m_cam.transform.position = m_vpccFocus - Vector3.forward * m_vpccDistance;
+    }
     private bool skip = false; //set to true when we activate the controls, ignore the inputs for 1 frame, to avoid switching MIV cam controls when selecting a stream
 
     private float touchSensitivity = 0.02f;
@@ -103,6 +127,8 @@ public class V3CCameraController: MonoBehaviour
     private void OnMediaChange(V3CDecoderManager.V3CRenderData data)
     {
         contentType = data.m_mediaType;
+        m_vpccFocus = m_defaultVpccFocus;       // measured framing belongs to the previous title
+        m_vpccDistance = m_defaultVpccDistance;
         touchSensitivity = 0.02f;
         mouseSensitivity = 0.002f;
         float fSize = getSEISize(data);
@@ -159,6 +185,11 @@ public class V3CCameraController: MonoBehaviour
 
             ReinitFOV();
             m_cam.ResetProjectionMatrix();
+
+            if (contentType == DecoderPluginInterface.MediaType.VPCC)
+            {
+                ApplyVpccFraming();
+            }
         }
     }
 }

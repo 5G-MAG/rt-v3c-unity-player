@@ -407,6 +407,11 @@ namespace IDCC.V3CDecoder
             m_renderMode = val;
 		}
 
+        // Point positions (model space, float RGBA) the plugin writes each frame; read by the player to frame the content.
+        public RenderTexture PointPositionTexture => m_v3cPointPosTex;
+
+        public Transform ModelTransform => m_VPCCModelTransform;
+
         public void SetMaxBbox(float size)
         {
             m_maxBbox = size;

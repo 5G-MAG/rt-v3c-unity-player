@@ -4,6 +4,9 @@
     package="com.unity3d.player"
     xmlns:tools="http://schemas.android.com/tools">
 	<uses-permission android:name="android.permission.INTERNET" />
+    <!-- Meta Quest: hands are supported, controllers are not required -->
+    <uses-feature android:name="oculus.software.handtracking" android:required="false" />
+    <uses-permission android:name="com.oculus.permission.HAND_TRACKING" />
     <application>
         <activity android:name="com.unity3d.player.UnityPlayerActivity"
                   android:theme="@style/UnityThemeSelector">
