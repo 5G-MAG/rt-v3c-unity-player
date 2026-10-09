@@ -99,6 +99,18 @@ Unity will generate a .apk file that you can copy and install on your phone. To 
 
 Note that you will need to manually install the content and/or configuration files on your device. Run the application once on your device to ensure the creation of the folder.
 
+### Meta Quest
+
+The Android build above is for phones. A Meta Quest build needs other project settings (OpenGL ES 3 only, linear colour space, the OpenXR loader with the Meta Quest feature), which are not the default so that the phone build keeps working. Apply them with the editor script, from the repository root:
+
+```
+Unity -batchmode -nographics -quit -projectPath V3CImmersiveTest -buildTarget Android -executeMethod QuestSetup.Run
+```
+
+then open the project (or run the Android build) with a new Unity start, because the input handling setting only applies after a restart. The script changes `ProjectSettings` and creates the `Assets/XR` settings; do not commit those if you also build for phones.
+
+The player then shows the V-PCC content life-size in front of you. The left thumbstick walks, the right thumbstick turns in steps, and the A button of the right controller brings the figure back in front of you. As on the phone, the content and the configuration have to be installed on the headset (`adb push` into `/sdcard/Android/data/<package>/files`), and a server on the computer is reached with `adb reverse tcp:<port> tcp:<port>` when the headset and the computer cannot reach each other on the network.
+
 ## Example configuration and V3C Test Contents
 
 Example configuration and V3C test contents are available in the [rt-v3c-content](https://github.com/5G-MAG/rt-v3c-content).  

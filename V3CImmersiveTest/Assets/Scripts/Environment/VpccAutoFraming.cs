@@ -23,7 +23,12 @@ namespace IDCC.V3CDecoder
         private const int Bins = 1024;
         private const float FillOfViewHeight = 0.55f;
 
+        // raised once the figure's centre and size (in scene units) are known, or again for a title already measured
+        public static event System.Action<Vector3, Vector3> Measured;
+
         private V3CDecoderManager m_manager;
+        private readonly System.Collections.Generic.Dictionary<int, Known> m_known = new System.Collections.Generic.Dictionary<int, Known>();
+        private class Known { public Vector3 Centre, Size; public float Distance; }
         private Coroutine m_running;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -47,7 +52,18 @@ namespace IDCC.V3CDecoder
         private void OnMediaReady(V3CDecoderManager.V3CRenderData data)
         {
             if (m_running != null) StopCoroutine(m_running);
-            m_running = data.m_mediaType == DecoderPluginInterface.MediaType.VPCC ? StartCoroutine(Frame(data.m_mediaId)) : null;
+            m_running = null;
+            if (data.m_mediaType != DecoderPluginInterface.MediaType.VPCC) return;
+            Known known;
+            if (m_known.TryGetValue(data.m_mediaId, out known))
+            {
+                // a title already measured keeps its first good measurement, so it is framed at once and the same way
+                var cameraController = FindFirstObjectByType<V3CCameraController>();
+                if (cameraController != null) cameraController.SetVpccFraming(known.Centre, known.Distance);
+                Measured?.Invoke(known.Centre, known.Size);
+                return;
+            }
+            m_running = StartCoroutine(Frame(data.m_mediaId));
         }
 
         private class Retry { public bool Again; }
@@ -119,7 +135,9 @@ namespace IDCC.V3CDecoder
             float forWidth = Mathf.Max(size.x, size.z) / 0.45f / (2f * tanHalf * cam.aspect);
             float distance = Mathf.Max(Mathf.Max(forHeight, forWidth), size.z * 0.5f + 0.6f);
             Debug.Log($"VpccAutoFraming: {valid} points, size={size}, centre={centre}, distance={distance:0.00}");
+            m_known[mediaId] = new Known { Centre = centre, Size = size, Distance = distance };
             cameraController.SetVpccFraming(centre, distance);
+            Measured?.Invoke(centre, size);
         }
 
         private static bool Usable(Vector4 p)
