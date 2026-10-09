@@ -26,6 +26,15 @@ namespace IDCC.V3CDecoder.Demo
     {
         public static V3CPlayerHud Instance { get; private set; }
 
+        // used by the headset build, which shows this interface on a panel in the room instead of on the screen
+        public Canvas Canvas => m_canvas;
+        public Font BoldFont => m_bold;
+        public Sprite RoundSprite => m_round;
+        public void NotifyActivity() { m_lastTouch = Time.unscaledTime; }
+        // true while something modal is up (library, settings, an error) or a title is loading
+        public bool KeepVisible => m_isLoading || (m_library != null && m_library.alpha > 0.5f) || (m_settings != null && m_settings.alpha > 0.5f)
+                                   || (m_errorCard != null && m_errorCard.alpha > 0.5f);
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
         {

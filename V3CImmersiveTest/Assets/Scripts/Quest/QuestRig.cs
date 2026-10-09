@@ -51,6 +51,7 @@ namespace IDCC.V3CDecoder.Quest
 
             m_rig = new GameObject("XRRig").transform;
             m_cam.transform.SetParent(m_rig, false);
+            gameObject.AddComponent<QuestMenu>().Init(m_rig, m_cam, this);
             var driver = m_cam.gameObject.AddComponent<TrackedPoseDriver>();
             driver.SetPoseSource(TrackedPoseDriver.DeviceType.GenericXRDevice, TrackedPoseDriver.TrackedPose.Center);
             driver.trackingType = TrackedPoseDriver.TrackingType.RotationAndPosition;

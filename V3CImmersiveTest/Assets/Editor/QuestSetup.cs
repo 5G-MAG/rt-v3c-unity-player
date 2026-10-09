@@ -17,6 +17,7 @@ using UnityEngine.Rendering;
 using UnityEngine.XR.Management;
 using UnityEngine.XR.OpenXR;
 using UnityEngine.XR.OpenXR.Features.Interactions;
+using UnityEngine.XR.OpenXR.Features.Meta;
 using UnityEngine.XR.OpenXR.Features.MetaQuestSupport;
 
 // Sets the project up for a Meta Quest build. The phone build is the default and is not changed until this is run:
@@ -25,7 +26,8 @@ using UnityEngine.XR.OpenXR.Features.MetaQuestSupport;
 //
 // What it sets: OpenGL ES 3 only (the decoder plug-in draws with GL), minimum Android 10, linear colour space (OpenXR
 // on OpenGL ES refuses gamma), both input handlers (the controllers and hands are read through the Input System), the
-// OpenXR loader with the Meta Quest feature and the Touch controller profiles, and multi-pass stereo.
+// OpenXR loader with the Meta Quest feature, the Touch controller and hand interaction profiles, passthrough and the
+// boundary visibility request, and multi-pass stereo.
 public static class QuestSetup
 {
     public static void Run()
@@ -69,6 +71,10 @@ public static class QuestSetup
         Enable(xr.GetFeature<OculusTouchControllerProfile>());
         Enable(xr.GetFeature<MetaQuestTouchProControllerProfile>());
         Enable(xr.GetFeature<MetaQuestTouchPlusControllerProfile>());
+        Enable(xr.GetFeature<HandInteractionProfile>());          // hands as a pointer when no controller is in use
+        Enable(xr.GetFeature<ARSessionFeature>());                // passthrough (the real room behind the player)
+        Enable(xr.GetFeature<ARCameraFeature>());
+        Enable(xr.GetFeature<BoundaryVisibilityFeature>());       // the request to hide the boundary while passthrough shows
         EditorUtility.SetDirty(xr);
         AssetDatabase.SaveAssets();
         Debug.Log("QuestSetup: done");
