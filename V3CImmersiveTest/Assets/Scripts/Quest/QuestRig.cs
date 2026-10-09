@@ -29,6 +29,7 @@ namespace IDCC.V3CDecoder.Quest
 
         private Transform m_rig;
         private Camera m_cam;
+        private QuestMiv m_miv;
         private Vector3 m_figureCentre, m_figureSize;
         private bool m_hasFigure, m_turnReady = true, m_recentreReady = true;
 
@@ -52,6 +53,8 @@ namespace IDCC.V3CDecoder.Quest
             m_rig = new GameObject("XRRig").transform;
             m_cam.transform.SetParent(m_rig, false);
             gameObject.AddComponent<QuestMenu>().Init(m_rig, m_cam, this);
+            m_miv = gameObject.AddComponent<QuestMiv>();
+            m_miv.Init(m_rig, m_cam, manager);
             var driver = m_cam.gameObject.AddComponent<TrackedPoseDriver>();
             driver.SetPoseSource(TrackedPoseDriver.DeviceType.GenericXRDevice, TrackedPoseDriver.TrackedPose.Center);
             driver.trackingType = TrackedPoseDriver.TrackingType.RotationAndPosition;
@@ -87,7 +90,9 @@ namespace IDCC.V3CDecoder.Quest
         // Puts the figure back in front of the viewer, on the floor
         public void BringFigure()
         {
-            if (!m_hasFigure || m_cam == null) return;
+            if (m_cam == null) return;
+            if (m_miv != null && m_miv.Active) { m_miv.Place(); return; }
+            if (!m_hasFigure) return;
             float s = m_figureSize.y / LifeSizeHeight;
             Vector3 head = m_cam.transform.localPosition;
             Vector3 flatForward = Vector3.ProjectOnPlane(m_cam.transform.localRotation * Vector3.forward, Vector3.up).normalized;
