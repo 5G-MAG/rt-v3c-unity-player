@@ -8,8 +8,7 @@
 </p>
 
 <p align="center">
-  <img alt="Status: under development"
-    src="https://img.shields.io/badge/Status-Under%20Development-e67e22">
+  <img alt="Status" src="https://img.shields.io/endpoint?url=https%3A%2F%2Fwww.5g-mag.com%2Fbadges%2Fstatus%2Frt-v3c-unity-player.json">
   <a href="https://github.com/5G-MAG/rt-v3c-unity-player/releases"><img alt="Version"
     src="https://img.shields.io/github/v/release/5G-MAG/rt-v3c-unity-player?label=Version"></a>
   <a href="License.md"><img alt="License: 5G-MAG Public License v1.0"
