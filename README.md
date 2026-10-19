@@ -1,133 +1,199 @@
-<h1 align="center">V3C Immersive Platform - Unity Player</h1>
 <p align="center">
-  <img src="https://img.shields.io/badge/Status-Under_Development-yellow" alt="Under Development">
-  <img src="https://img.shields.io/badge/License-5G--MAG%20Public%20License%20(v1.0)-blue" alt="License">
+  <img src=".github/banner.svg" width="100%" alt="Reference Tools · MPEG V3C Immersive Platform: V3C Unity Player">
 </p>
 
-# Introduction
+<p align="center">
+  A Unity package that decodes and plays V3C content, using the
+  <a href="https://github.com/5G-MAG/rt-v3c-decoder-plugin">V3C Immersive Platform Decoder Plugin</a>.
+</p>
 
-This project provides a Unity package to decode and play V3C contents in Unity, using the [V3C Immersive Platform - Decoder Plugin](https://github.com/5G-MAG/rt-v3c-decoder-plugin). Also provided in that repository are V-PCC and MIV synthesizers plugins needed for the rendering of the V3C contents. 
+<p align="center">
+  <img alt="Status" src="https://img.shields.io/endpoint?url=https%3A%2F%2Fwww.5g-mag.com%2Fbadges%2Fstatus%2Frt-v3c-unity-player.json">
+  <a href="https://github.com/5G-MAG/rt-v3c-unity-player/releases"><img alt="Version"
+    src="https://img.shields.io/github/v/release/5G-MAG/rt-v3c-unity-player?label=Version"></a>
+  <a href="License.md"><img alt="License: 5G-MAG Public License v1.0"
+    src="https://img.shields.io/badge/License-5G--MAG%20PL%20v1.0-blue"></a>
+</p>
 
-This project also includes a simple Unity project showcasing how to use the package. It supports both Windows and Android targets.  
+<p align="center">
+  <a href="https://www.5g-mag.com/reference-tools/v3c/">Project page</a> &nbsp;&middot;&nbsp;
+  <a href="https://github.com/5G-MAG/rt-v3c-unity-player/issues">Issues</a> &nbsp;&middot;&nbsp;
+  <a href="https://www.5g-mag.com/contributing">Contributing</a>
+</p>
 
-## Requirements
+---
 
-Unity 6000.0.25f1 (with Android build support if you plan on testing on Android phones)
+## At a glance
 
-### Windows
-A device with an NVIDIA GPU card supporting hardware HEVC decoding (CUVID) and OpenGL Core 4.5 is expected.  You can check if your graphic card has the right decoder here: [Video encode and decode GPU support](https://developer.nvidia.com/video-encode-and-decode-gpu-support-matrix-new).
+|  |  |
+|---|---|
+| **Part of** | [MPEG V3C Immersive Platform](https://www.5g-mag.com/reference-tools/v3c/), alongside [rt-media-origin](https://github.com/5G-MAG/rt-media-origin), [rt-v3c-content](https://github.com/5G-MAG/rt-v3c-content), [rt-v3c-decoder-plugin](https://github.com/5G-MAG/rt-v3c-decoder-plugin), [rt-v3c-examples](https://github.com/5G-MAG/rt-v3c-examples) |
 
-### Android
-A device supporting OpenGL ES 3.2 and HEVC hardware decoding (MediaCodec) is expected.  
+## Introduction
 
-## Cloning  
+This repository holds a Unity package, `V3CDecoder`, and a small Unity project, `V3CImmersiveTest`,
+that shows how to use it. The package plays V3C content with the libraries built in
+[rt-v3c-decoder-plugin](https://github.com/5G-MAG/rt-v3c-decoder-plugin), which also provides the
+V-PCC and MIV synthesizer plugins needed for rendering. Test content and configuration files come
+from [rt-v3c-content](https://github.com/5G-MAG/rt-v3c-content). Windows and Android targets are
+supported.
 
-To clone the project, use this command line:
+Questions on setting up or using the V3C Immersive Platform are answered in the
+[FAQ](./docs/FAQ.md).
+
+## Install dependencies
+
+- Unity 6000.0.25f1, with Android build support if you will test on Android phones.
+- Windows: a device with an NVIDIA GPU that supports hardware HEVC decoding (CUVID) and OpenGL Core
+  4.5. NVIDIA lists the decoders each card has in its
+  [Video encode and decode GPU support](https://developer.nvidia.com/video-encode-and-decode-gpu-support-matrix-new)
+  matrix.
+- Android: a device that supports OpenGL ES 3.2 and HEVC hardware decoding (MediaCodec).
+
+## Downloading
 
 ```shell
 git clone https://github.com/5G-MAG/rt-v3c-unity-player  
 ```
 
-## Decoder plugin installation
+## Building
 
-This project uses the V3CImmersivePlatform Decoder plugin, available [here](https://github.com/5G-MAG/rt-v3c-decoder-plugin). To rebuild the v3c-decoder-plugin, please following the instruction in that repository and deploy the compiled libraries into the package.  
+### Installing the decoder plugin
 
-Libraries should be copied from the v3c-decoder-plugin project. To do so, it is recommended to use the script `/Scripts/copy_libs.sh` provided in the v3c-decoder-plugin project.
+The package needs the libraries built in
+[rt-v3c-decoder-plugin](https://github.com/5G-MAG/rt-v3c-decoder-plugin). Build them by following
+the instructions in that repository, then copy them into the package with the script
+`/Scripts/copy_libs.sh` from that repository. The commands below assume both repositories are cloned
+side by side.
 
-### Windows
+#### Windows
 
 ```shell
 cd rt-v3c-unity-player
 ../rt-v3c-decoder-plugin/Scripts/copy_libs.sh ./Packages/V3CDecoder/Runtime/Plugins release Windows
 ```
 
-The above script, copy_libs.sh, will copy all the DLLs from rt-v3c-decoder-plugin/Output/Windows/Release/x86_64 to rt-v3c-unity-player/Packages/V3CDecoder/Runtime/Plugins 
+With `release`, the script copies into `Packages/V3CDecoder/Runtime/Plugins` the DLLs from these
+folders of rt-v3c-decoder-plugin: `Output/Windows/Release/x86_64`, `Libraries/iloj/release/msvc/bin`
+and `Libraries/Windows/Release/x86_64`.
 
-### Android
+#### Android
 
 ```shell
 cd rt-v3c-unity-player
 ../rt-v3c-decoder-plugin/Scripts/copy_libs.sh ./Packages/V3CDecoder/Runtime/Plugins release Android
 ```
 
-The above script, copy_libs.sh, will:
+With `release`, the script copies:
 
-- Copy the jar file V3CImmersiveDecoderVideo.jar
-from ./rt-v3c-decoder-plugin/Output/Android/V3CImmersiveDecoderVideo.jar to rt-v3c-unity-player/Packages/Runtime/Plugins/android/libs
-- Copy all the .so files  
-from ./rt-v3c-decoder-plugin/Output/Android/Release/arm64-v8a/\*.so to rt-v3c-unity-player/Packages/V3CDecoder/Runtime/Plugins/android/libs/arm64-v8a
-from ./rt-v3c-decoder-plugin/Libraries/Android/Release/arm64-v8a/*.so to rt-v3c-unity-player/Packages/V3CDecoder/Runtime/Plugins/android/libs/arm64-v8a
+- the jar `V3CImmersiveDecoderVideo.jar`, from `Libraries/iloj/release/android` of
+  rt-v3c-decoder-plugin, to `Packages/V3CDecoder/Runtime/Plugins/Android`;
+- the `.so` files from `Output/Android/Release/arm64-v8a`, `Libraries/iloj/release/android/arm64-v8a/lib`
+  and `Libraries/Android/Release/arm64-v8a` of rt-v3c-decoder-plugin, to
+  `Packages/V3CDecoder/Runtime/Plugins/Android/libs/arm64-v8a`.
 
-## Launching the Unity Player
+### Opening the project in Unity
 
-Add the Unity Player project via Unity Hub (Add / Add project from disk).
+In Unity Hub, choose Add, then Add project from disk.
 
-<img src="docs/images/unity_hub_1.png" alt="drawing" width="800"/>
+<img src="docs/images/unity_hub_1.png" alt="Unity Hub, Add project from disk" width="800"/>
 
-Select the directory "rt-v3c-unity-player/V3CImmersiveTest" and click "Add Project"
+Select the directory `rt-v3c-unity-player/V3CImmersiveTest` and click Add Project.
 
-<img src="docs/images/unity_hub_2.png" alt="drawing" width="800"/>
+<img src="docs/images/unity_hub_2.png" alt="Unity Hub, selecting the V3CImmersiveTest directory" width="800"/>
 
-Then select "V3CImmersiveTest" to launch Unity.
+Then select V3CImmersiveTest to open it in Unity.
 
-### Settings
+#### Player settings
 
-To run (and build) the Unity test project, or any project using the V3CDecoderPackage, you need to set the following Unity player settings (Edit -> Project Settings -> Player)
+The test project, and any project that uses the V3CDecoder package, needs these player settings
+(Edit, Project Settings, Player) to run and build:
 
-- Graphics APIs for Windows -> OpenGLCore (for Windows)
-- Graphics APIs -> OpenGLES3 (for Android)
-- Android scripting backend -> IL2CPP, then set the target platform to arm64-v8a
+- Graphics APIs for Windows: OpenGLCore
+- Graphics APIs for Android: OpenGLES3
+- Android scripting backend: IL2CPP, with arm64-v8a as the target architecture
 
-Note: these settings are checked automatically when importing the package and errors should pop up in the Unity Console as long as they are not correctly set.
+The package checks these settings when it is imported, and reports any that are wrong as errors in
+the Unity Console.
 
-## Building the Demo Scene in Unity
+### Building the demo scene
 
-Check that the project is opened with the Scene "V3C Simple Player"
-If this is not the case, select Assets/Scenes to load the V3C Simple Player scene. You can also open the scene from "File/Open Scene/" and select Scenes/V3C-Simple Player.unity
-
-### Windows
-
-Go to File->Build Settings (or Ctrl+Shift+B), select the Standalone Windows target and select either Build or Build and Run.
-
-You will be asked to chose a directory which will contain the .exe and all the necessary files, we strongly suggest you choose an empty directory for that.
-
-### Android
-
-Go to File->Build Settings (or Ctrl+Shift+B), select the Android target and select either Build or Build and Run.
-
-Unity will generate a .apk file that you can copy and install on your phone. To use the Build&Run feature, you will need to activate the Debug through USB feature on your device (requires developper mode).
-
-Note that you will need to manually install the content and/or configuration files on your device. Run the application once on your device to ensure the creation of the folder.
-
-## Example configuration and V3C Test Contents
-
-Example configuration and V3C test contents are available in the [rt-v3c-content](https://github.com/5G-MAG/rt-v3c-content).  
-The **README.md** in this repository provides useful information on V3C test content in "on-device-data" and "on-server-data" folders and JSON configuration files (config.json and library.json).
-This repository is also accessible via `rt-v3c-decoder-plugin/V3C-Content` GIT submodule.
-
-### Local data setup
-
-The content in the `rt-v3c-decoder-plugin/V3C-Content/on-device-data` folder (both "config.json" file and "data" folder) is to be copied in the Unity project local data folder located here:
+Check that the project is open on the scene V3C Simple Player. If it is not, load it from
+Assets/Scenes, or from File, Open Scene, selecting `Scenes/V3C Simple Player.unity`.
 
 #### Windows
 
-`C:/Users/[your-user-name]/AppData/LocalLow/InterDigital/V3CSimplePlayer/`
-
-(needed for testing in the Unity Editor and for the compiled project)
+Open File, Build Settings (Ctrl+Shift+B), select the Standalone Windows target, then Build or Build
+and Run. Unity asks for a directory to hold the `.exe` and its files; use an empty one.
 
 #### Android
 
-`file/storage/emulated/0/Android/data/com.InterDigital.V3CSimplePlayer/files` 
+Open File, Build Settings (Ctrl+Shift+B), select the Android target, then Build or Build and Run.
 
-or `Android/data/com.InterDigital.V3CSimplePlayer/files`
+Unity generates an `.apk` file that you can copy to your phone and install. Build and Run needs USB
+debugging enabled on the device, which requires developer mode.
 
-(according to the smartphone)
+The content and configuration files must be installed on the device by hand (see
+[Configuration](#configuration)). Run the application once on the device first, so that it creates
+its data folder.
 
-### Remote data setup
+## Running
 
-The content of the `rt-v3c-decoder-plugin/V3C-Content/on-server-data` folder is to be copied in a DASH server.  
-You may follow **README_dash_server.md** present in the "V3C-Content" folder to set-up your own DASH Server.
-You need then to edit config.json:
+Once the demo content is set up (see [Configuration](#configuration)), press Play in the Editor.
+
+![V3C Simple Player](/docs/images/V3CSimplePlayer.png)
+
+### Controls
+
+The Play button, on the left of the screen, loads the first stream; pressing it again stops the
+decoder. The Next arrow then steps through the streams in this order:
+
+1. V-PCC Football player (test content, loaded by Play)
+2. MIV MVD Dance
+3. MIV MPI Mannequin
+4. V-PCC Football player, streamed by your DASH server
+5. MIV MVD Dance, streamed by your DASH server
+6. MIV MPI Mannequin, streamed by your DASH server
+
+The Previous arrow goes back to the previous content, and the circular arrow resets the camera.
+
+| Content | Action | Windows | Android |
+|---|---|---|---|
+| V-PCC | Rotate the camera around the model | Left click and drag | One-finger swipe |
+| V-PCC | Move towards the model | Scroll wheel | Two-finger pinch |
+| MIV | Move in the x/y plane | Left click and drag | One-finger swipe |
+| MIV | Rotate about the x/y axes | Right click and drag | Two-finger swipe |
+| MIV | Zoom | Scroll wheel | Two-finger pinch |
+
+## Configuration
+
+Example configuration files and V3C test content are in
+[rt-v3c-content](https://github.com/5G-MAG/rt-v3c-content), which is also available as the Git
+submodule `rt-v3c-decoder-plugin/V3C-Content`. Its README describes the test content in the
+`on-device-data` and `on-server-data` folders and the JSON configuration files, `config.json` and
+`library.json`.
+
+### Local data
+
+Copy the contents of `rt-v3c-decoder-plugin/V3C-Content/on-device-data` (the `config.json` file and
+the `data` folder) into the application's local data folder.
+
+On Windows, this folder is needed both for testing in the Unity Editor and for the built
+application:
+
+`C:/Users/[your-user-name]/AppData/LocalLow/InterDigital/V3CSimplePlayer/`
+
+On Android, depending on the phone, it is
+
+`file/storage/emulated/0/Android/data/com.InterDigital.V3CSimplePlayer/files`
+
+or `Android/data/com.InterDigital.V3CSimplePlayer/files`.
+
+### Remote data
+
+Copy the contents of `rt-v3c-decoder-plugin/V3C-Content/on-server-data` to a DASH server.
+`README_dash_server.md` in the `V3C-Content` folder describes how to set one up. Then edit
+`config.json` to point at your server:
 
 ```
   "Networking": {  
@@ -143,7 +209,7 @@ You need then to edit config.json:
   },  
 ```
 
-Then update your library.json file for the content present on your server:
+and update `library.json` for the content on your server:
 
 ```
 {
@@ -168,41 +234,17 @@ Then update your library.json file for the content present on your server:
     },
 ```
 
-## Running the Unity Player with Demo Content
+## Contributing
 
-Once the demo content is setup, press Play in the Editor and the application should run without issues.
+Contributions are welcome. How to raise an issue, fork the repository and open a pull request, and
+the Contributor License Agreement required before code can be merged, are described at
+<https://www.5g-mag.com/contributing>.
 
-![alt text](/docs/images/V3CSimplePlayer.png)
+## License
 
-UI Controls:
+Distributed under the 5G-MAG Public License v1.0. See [License.md](License.md); the licence terms
+are also available [online](https://drive.google.com/file/d/1cinCiA778IErENZ3JN52VFW-1ffHpx7Z/view).
 
-- Press the Play button on the left of the screen to load the first stream (VPCC Football player with the test content). Press it again to stop the decoder.
-- Press the Next arrow to load the second stream (MIV MVD Dance)
-- Press the Next arrow to load the third stream (MIV MPI Mannequin)
-- Press the Next arrow to load the first stream (VPCC Football player) streamed by your DASH Server
-- Press the Next arrow to load the second stream (MIV MVD Dance) streamed by your DASH Server
-- Press the Next arrow to load the third stream (MIV MPI Mannequin) streamed by your DASH Server
-- You can press the circling arrow to reset the camera, and Previous arrow to come back to the previous content
-
-V-PCC:
-
-- Rotate the camera around the model : Left click and drag (Windows) / Single finger swipe (Android)
-- Move towards the model: Scroll wheel (Windows) / Two finger pinch (Android)
-
-MIV:
-
-- Move (x/y plane): Left click and drag (Windows) / Single finger swipe (Android)
-- Rotate (x/y axis): Right click and drag (Windows) / Double finger swipe (Android)
-- Zoom: Scroll wheel (Windows) / Two finger Pinch (Android)
-
-## FAQ
-
-If you have any questions on the setup or the usage of the V3C Immersive Platform, please consult the [FAQ page](./docs/FAQ.md).  
-
-## Licenses
-
-This project is provided under 5G-MAG's Public License. For the full license terms, please see the LICENSE file distributed along with the repository or retrieve it from [here](https://drive.google.com/file/d/1cinCiA778IErENZ3JN52VFW-1ffHpx7Z/view).  
-
-External dependencies:
-
-- This project uses softwares from the [v3c-decoder-plugin](https://github.com/5G-MAG/rt-v3c-decoder-plugin), check licenses in that project before using it.
+This project uses software from
+[rt-v3c-decoder-plugin](https://github.com/5G-MAG/rt-v3c-decoder-plugin); check the licences in that
+project before using it.
